@@ -10,12 +10,8 @@ auth_router = APIRouter(prefix="/auth")
 @auth_router.post("/register", status_code=200)
 async def register_user(req: Request, user: UserRequestModel):
     auth_provider: AuthenticationProvider = req.state.auth_provider
-    cognito_user = auth_provider.signup_user(user)
-    cognito_user_info = {
-        "Username": cognito_user["Username"],
-        "Attributes": cognito_user["Attributes"]
-    }
-    return {"user": cognito_user_info}
+    user = auth_provider.signup_user(user)
+    return {"user": user}
 
 
 @auth_router.post("/login", status_code=200)
@@ -27,7 +23,7 @@ async def login(req: Request, user_login: UserLoginRequestModel):
     }
 
 
-@auth_router.post("/refresh", status_code=200, dependencies=[Depends(validate_token)])
+@auth_router.post("/refresh", status_code=200)
 async def refresh(req: Request, refresh_request: RefreshRequestModel):
     auth_provider: AuthenticationProvider = req.state.auth_provider
     auth_result: dict = auth_provider.refresh_token(refresh_request)
@@ -39,7 +35,7 @@ async def refresh(req: Request, refresh_request: RefreshRequestModel):
 @auth_router.get("/user", status_code=200, dependencies=[Depends(validate_token)])
 async def get_user(req: Request):
     auth_provider: AuthenticationProvider = req.state.auth_provider
-    token = req.headers["Authentication"].split(" ")[1]
+    token = req.headers["authorization"].split(" ")[1]
     user_info = auth_provider.get_user_info(token)
     return {
         "UserInfo": user_info

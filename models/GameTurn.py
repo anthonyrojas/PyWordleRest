@@ -5,8 +5,8 @@ from datetime import datetime, date
 @dataclass
 class GameTurn:
     username: str
-    date: date
-    timestamp: datetime
+    game_date: date
+    game_timestamp: datetime
     word: str
     win: bool
     game_id: str
@@ -16,11 +16,11 @@ class GameTurn:
             "username": {
                 "S": self.username
             },
-            "date": {
-                "S": self.date.isoformat()
+            "game_date": {
+                "S": self.game_date.isoformat()
             },
-            "timestamp": {
-                "N": self.timestamp.timestamp()
+            "game_timestamp": {
+                "N": str(self.game_timestamp.timestamp())
             },
             "word": {
                 "S": self.word

@@ -4,12 +4,12 @@ from fastapi import Request, HTTPException, Depends, APIRouter
 from models.GameWord import GameWord
 from models.GameTurn import GameTurn
 from datetime import date, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from middleware.AuthMiddleware import validate_token
 
 
 class GameWordAttempt(BaseModel):
-    word: str = Field(..., min_length=5, max_length=5, regex="^[a-zA-Z]+$")
+    word: str
 
 
 words_router = APIRouter(prefix="/word")
@@ -25,11 +25,11 @@ async def get_game_word(req: Request):
         random_word = words_provider.get_random_word()
         current_game_word = GameWord(
             "sys",
-            current_date,
+            random_word,
             datetime.fromisoformat(current_date.isoformat()),
-            random_word
+            current_date
         )
-        dynamo_provider.save_word_game()
+        dynamo_provider.save_word_game(current_game_word)
     return {
         "GameWord": current_game_word.word
     }
@@ -46,26 +46,29 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
     # check word against game word
     timestamp = datetime.now().timestamp()
     game_word = dynamo_provider.get_game_for_date(date.fromtimestamp(timestamp))
-    game_date = date.fromtimestamp(timestamp)
+    game_date = game_word.game_date
     game_turn = GameTurn(
-        username,
-        game_date,
-        timestamp,
-        word_attempt,
-        False
+        username=username,
+        game_date=game_date,
+        game_timestamp=datetime.fromtimestamp(timestamp),
+        word=word_attempt,
+        win=False,
+        game_id=game_word.game_id
     )
     game_attempt_count = dynamo_provider.get_user_attempt_count_for_game(
         game_date,
-        "sys",
+        username,
         game_word.game_id
     )
-    if game_attempt_count >= 6:
+    print(game_attempt_count)
+    if game_attempt_count >= 5:
         raise HTTPException(400, {
             "Message": "You cannot have more than 6 attempts per game!"
         })
-    if game_word == word_attempt:
+    if game_word.word == game_turn.word:
         game_turn.win = True
     dynamo_provider.save_user_attempt(game_turn)
+
     return {
         "Message": "Correct!" if game_turn.win is True else "Wrong!"
     }
@@ -88,7 +91,7 @@ async def get_game_attempts_by_date(req: Request, game_date: str):
     return {"GameAttempts": attempts}
 
 
-@words_router.get("/game-attempts", status_code=200, dependencies=[Depends(validate_token)])
+@words_router.get("/user-game-attempts", status_code=200, dependencies=[Depends(validate_token)])
 async def get_user_game_attempts(req: Request, last_timestamp: float = 0):
     username: str = req.state.username
     dynamo_provider: DynamoProvider = req.state.dynamo_provider

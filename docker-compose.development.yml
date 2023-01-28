@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  dynamodb:
+    image: "amazon/dynamodb-local:latest"
+    container_name: my-dynamodb
+    hostname: dynamodb
+    restart: always
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory -cors '*'"
+  pywordle:
+    build: .
+    container_name: pywordle-fastapi
+    environment:
+      PROJECT_ENV: development
+      PORT: 8080
+      WORDS_API_KEY: "${WORDS_API_KEY}"
+    depends_on:
+      - dynamodb
+    volumes:
+      - .:/usr/src/pywordle/app
+    ports:
+      - "8080:8080"

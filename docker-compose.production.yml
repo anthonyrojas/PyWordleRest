@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  pywordle:
+    build: .
+    container_name: pywordle-fastapi
+    environment:
+      PROJECT_ENV: production
+      PORT: 8080
+      WORDS_API_KEY: "${WORDS_API_KEY}"
+    volumes:
+      - .:/usr/src/pywordle/app
+    ports:
+      - "8080:8080"

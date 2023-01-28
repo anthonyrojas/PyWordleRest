@@ -3,7 +3,7 @@ from fastapi import Request, HTTPException, status
 
 async def validate_token(req: Request):
     try:
-        authentication = req.headers["Authentication"]
+        authentication = req.headers["authorization"]
         if not str.startswith(authentication, "Bearer"):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, {
                 "message": "Authentication token not found!"
@@ -13,7 +13,7 @@ async def validate_token(req: Request):
         cognito_user = auth_provider.verify_token(token)
         username = cognito_user["Username"]
         req.state.username = username
-        return True
+        return username
     except Exception as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, {
             "message": "Unauthorized! Failed to validate token.",

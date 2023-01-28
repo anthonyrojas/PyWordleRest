@@ -1,23 +1,23 @@
 from dataclasses import dataclass
 from datetime import datetime, date
-import uuid
+from uuid import uuid4
 
 
 @dataclass
 class GameWord:
     username: str  # wordgame will have 'sys' username
     word: str
-    timestamp: datetime
-    date: date
-    game_id: str = uuid.uuid4()
+    game_timestamp: datetime
+    game_date: date
+    game_id: str = str(uuid4())
 
     def to_dynamo_json(self):
         return {
             "game_id": {
                 "S": self.game_id
             },
-            "timestamp": {
-                "N": self.timestamp.timestamp()
+            "game_timestamp": {
+                "N": str(self.game_timestamp.timestamp())
             },
             "word": {
                 "S": self.word
@@ -25,7 +25,7 @@ class GameWord:
             "username": {
                 "S": self.username
             },
-            "date": {
-                "S": self.date.isoformat()
+            "game_date": {
+                "S": self.game_date.isoformat()
             }
         }
