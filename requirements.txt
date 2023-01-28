@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+botocore
 boto3
 requests
 pydantic

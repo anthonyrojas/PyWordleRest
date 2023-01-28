@@ -7,6 +7,8 @@ services:
       PROJECT_ENV: production
       PORT: 8080
       WORDS_API_KEY: "${WORDS_API_KEY}"
+      USER_POOL_ID: "${USER_POOL_ID}"
+      APP_CLIENT_ID: "${APP_CLIENT_ID}"
     volumes:
       - .:/usr/src/pywordle/app
     ports:

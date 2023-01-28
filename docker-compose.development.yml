@@ -15,6 +15,8 @@ services:
       PROJECT_ENV: development
       PORT: 8080
       WORDS_API_KEY: "${WORDS_API_KEY}"
+      USER_POOL_ID: "${USER_POOL_ID}"
+      APP_CLIENT_ID: "${APP_CLIENT_ID}"
     depends_on:
       - dynamodb
     volumes:

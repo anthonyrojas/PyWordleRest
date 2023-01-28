@@ -36,8 +36,13 @@ async def http_middleware(req: Request, call_next):
             endpoint_url="http://localhost:8000",
         )
     words_api_key = os.getenv("WORDS_API_KEY")
-    print(words_api_key)
-    req.state.auth_provider: AuthenticationProvider = AuthenticationProvider(cognito_client)
+    user_pool_id = os.getenv("USER_POOL_ID")
+    app_client_id = os.getenv("APP_CLIENT_ID")
+    req.state.auth_provider: AuthenticationProvider = AuthenticationProvider(
+        cognito_client,
+        user_pool_id,
+        app_client_id
+    )
     req.state.words_provider: WordsProvider = WordsProvider(words_api_key)
     req.state.dynamo_provider: DynamoProvider = DynamoProvider(dynamo_client)
     response = await call_next(req)

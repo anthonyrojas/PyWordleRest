@@ -25,6 +25,7 @@ class WordsProvider:
             res = requests.get(request_url, headers=self.headers, params=query_string_params)
             json_res = res.json()
             words: list[str] = json_res["results"]["data"]
+            logging.info(f"Pulled words from the api: ${words}")
             return random.choice(words)
         except requests.RequestException as re:
             logging.error(re)

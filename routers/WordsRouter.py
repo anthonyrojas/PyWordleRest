@@ -23,6 +23,10 @@ async def get_game_word(req: Request):
     current_game_word = dynamo_provider.get_game_for_date(current_date)
     if current_game_word is None:
         random_word = words_provider.get_random_word()
+        if random_word == "":
+            raise HTTPException(400, {
+                "Message": "Failed to get game word."
+            })
         current_game_word = GameWord(
             "sys",
             random_word,
@@ -42,7 +46,7 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
     dynamo_provider: DynamoProvider = req.state.dynamo_provider
     word_attempt = game_word_attempt.word.lower().strip()
     if not words_provider.does_word_exist(word_attempt):
-        raise HTTPException(400, {"message": "Bad word attempt! The word must consist of 5 alphabetic characters"})
+        raise HTTPException(400, {"Message": "Bad word attempt! The word must consist of 5 alphabetic characters"})
     # check word against game word
     timestamp = datetime.now().timestamp()
     game_word = dynamo_provider.get_game_for_date(date.fromtimestamp(timestamp))
@@ -60,7 +64,6 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
         username,
         game_word.game_id
     )
-    print(game_attempt_count)
     if game_attempt_count >= 5:
         raise HTTPException(400, {
             "Message": "You cannot have more than 6 attempts per game!"
@@ -70,7 +73,7 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
     dynamo_provider.save_user_attempt(game_turn)
 
     return {
-        "Message": "Correct!" if game_turn.win is True else "Wrong!"
+        "WinStatus": game_turn.win
     }
 
 
