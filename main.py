@@ -56,9 +56,8 @@ app.include_router(words_router)
 app.include_router(auth_router)
 
 
-@app.get("/ping")
-async def health_check(req: Request, res: Response):
-    res.status_code = 200
+@app.get("/ping", status_code=200)
+async def health_check():
     return {
         "Message": "All systems good!"
     }

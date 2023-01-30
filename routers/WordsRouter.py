@@ -50,6 +50,22 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
     # check word against game word
     timestamp = datetime.now().timestamp()
     game_word = dynamo_provider.get_game_for_date(date.fromtimestamp(timestamp))
+    if game_word is None:
+        # get a new word for the day
+        random_word = words_provider.get_random_word()
+        if random_word == "":
+            raise HTTPException(500, {
+                "Message": "Failed to get game word."
+            })
+        current_date = date.today()
+        current_game_word = GameWord(
+            username="sys",
+            word=random_word,
+            game_date=current_date,
+            game_timestamp=datetime.fromisoformat(current_date.isoformat())
+        )
+        dynamo_provider.save_word_game(current_game_word)
+        game_word = current_game_word
     game_date = game_word.game_date
     game_turn = GameTurn(
         username=username,
@@ -71,10 +87,8 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
     if game_word.word == game_turn.word:
         game_turn.win = True
     dynamo_provider.save_user_attempt(game_turn)
-
-    return {
-        "WinStatus": game_turn.win
-    }
+    game_turn_result = words_provider.compare_word_attempt(game_word, game_turn)
+    return game_turn_result.to_json_response()
 
 
 @words_router.get("/game-attempts/{game_date}", status_code=200, dependencies=[Depends(validate_token)])
