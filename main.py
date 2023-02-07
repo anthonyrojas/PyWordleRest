@@ -1,6 +1,5 @@
 import os
-
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from routers.WordsRouter import words_router
 from routers.AuthRouter import auth_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +7,7 @@ from boto3 import client
 from providers.AuthenticationProvider import AuthenticationProvider
 from providers.WordsProvider import WordsProvider
 from providers.DynamoProvider import DynamoProvider
+import logging
 import uvicorn
 
 app = FastAPI()
@@ -22,19 +22,26 @@ app.add_middleware(
 
 @app.middleware("http")
 async def http_middleware(req: Request, call_next):
+    project_env = os.getenv("PROJECT_ENV")
     cognito_client = client(
         "cognito-idp",
         region_name="us-west-1"
     )
-    dynamo_client = client(
-        "dynamodb",
-        region_name="us-west-1"
-    )
-    if os.getenv("PROJECT_ENVIRONMENT") == "development":
+    if os.getenv("PROJECT_ENV") == "development":
         dynamo_client = client(
             "dynamodb",
-            endpoint_url="http://localhost:8000",
+            region_name="anywhere",
+            endpoint_url="http://my-dynamodb:8000",
+            aws_access_key_id="LOCAL_ACCESS_ID",
+            aws_secret_access_key="LOCAL_ACCESS_SECRET_KEY"
         )
+        req.state.dynamo_provider: DynamoProvider = DynamoProvider(dynamo_client)
+    else:
+        dynamo_client = client(
+            "dynamodb",
+            region_name="us-west-1"
+        )
+        req.state.dynamo_provider: DynamoProvider = DynamoProvider(dynamo_client)
     words_api_key = os.getenv("WORDS_API_KEY")
     user_pool_id = os.getenv("USER_POOL_ID")
     app_client_id = os.getenv("APP_CLIENT_ID")
@@ -44,7 +51,6 @@ async def http_middleware(req: Request, call_next):
         app_client_id
     )
     req.state.words_provider: WordsProvider = WordsProvider(words_api_key)
-    req.state.dynamo_provider: DynamoProvider = DynamoProvider(dynamo_client)
     response = await call_next(req)
     response.headers["Content-Type"] = "application/json"
     req.state.dynamo_provider.close_connection()
@@ -63,19 +69,19 @@ async def health_check():
     }
 
 
-def start_server():
-    if os.getenv("PROJECT_ENVIRONMENT") == "development":
-        # create the table to run this project locally
-        dynamo_client = client("dynamodb", endpoint_url="http://localhost:8000")
+def create_games_table(dynamo_client: client):
+    # create the table to run this project locally
+    logging.info("Project is in development environment. Creating the dynamodb table...")
+    try:
         dynamo_client.create_table(
             AttributeDefinitions=[
                 {
                     "AttributeName": "username",
-                    "AttributeValue": "S"
+                    "AttributeType": "S"
                 },
                 {
                     "AttributeName": "game_timestamp",
-                    "AttributeValue": "N"
+                    "AttributeType": "N"
                 }
             ],
             TableName="PyWordGame",
@@ -98,6 +104,26 @@ def start_server():
             ],
             TableClass="STANDARD"
         )
+    except RuntimeError as re:
+        logging.error(re)
+
+
+@app.on_event("startup")
+async def startup_event():
+    if os.getenv("PROJECT_ENV") == "development":
+        # create the table to run this project locally
+        dynamo_client = client(
+            "dynamodb",
+            endpoint_url="http://my-dynamodb:8000",
+            region_name="anywhere",
+            aws_access_key_id="LOCAL_ACCESS_ID",
+            aws_secret_access_key="LOCAL_ACCESS_SECRET_KEY"
+        )
+        create_games_table(dynamo_client)
+
+
+def start_server():
+    print("running start_server")
     env_port = 8080 if os.getenv("PORT") is None else int(os.getenv("PORT"))
     uvicorn.run(app, host="0.0.0.0", port=env_port, reload=True)
 

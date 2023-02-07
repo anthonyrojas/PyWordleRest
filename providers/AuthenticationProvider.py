@@ -16,7 +16,7 @@ class AuthenticationProvider:
                 AccessToken=token
             )
         except ClientError as ce:
-            logging.error(ce)
+            logging.error(ce.response)
             error_message = ce.response['Error']['Message']
             raise HTTPException(status_code=400, detail={
                 "Message": f"Failed to validate authentication token. Responded with: {error_message}"
@@ -63,7 +63,7 @@ class AuthenticationProvider:
             return user
         except ClientError as ce:
             logging.error(ce)
-            error_message = ce['Error']['Message']
+            error_message = ce.response['Error']['Message']
             raise HTTPException(status_code=400, detail={
                 "Message": f"Failed to create user. Auth service responded with: {error_message}"
             })
@@ -80,8 +80,8 @@ class AuthenticationProvider:
             )
             return cognito_auth_result["AuthenticationResult"]
         except ClientError as ce:
-            logging.error(ce)
-            error_message = ce['Error']['Message']
+            logging.error(ce.response)
+            error_message = ce.response['Error']['Message']
             raise HTTPException(status_code=400, detail={
                 "Message": f"Failed to sign in user ${login.username}. Auth service responded with: {error_message}"
             })
@@ -97,8 +97,8 @@ class AuthenticationProvider:
             )
             return cognito_auth_result["AuthenticationResult"]
         except ClientError as ce:
-            logging.error(ce)
-            error_message = ce['Error']['Message']
+            logging.error(ce.response)
+            error_message = ce.response['Error']['Message']
             raise HTTPException(status_code=400, detail={
                 "Message": f"Failed to refresh token. Auth service responded with: {error_message}"
             })
@@ -117,8 +117,8 @@ class AuthenticationProvider:
                 "UserAttributes": user_attributes
             }
         except ClientError as ce:
-            logging.error(ce)
-            error_message = ce["Error"]["Message"]
+            logging.error(ce.response)
+            error_message = ce.response["Error"]["Message"]
             raise HTTPException(status_code=400, detail={
                 "Message": f"Failed to get user info. Auth service responded with: {error_message}"
             })

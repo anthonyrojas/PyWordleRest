@@ -41,10 +41,10 @@ class DynamoProvider:
             )
             return int(dynamo_response["Count"])
         except ClientError as ce:
-            logging.error(ce)
+            logging.error(ce.response)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
                 "Message": f"Failed to get user's attempts on game with game id {game_id}",
-                "ServiceMessage": ce["Error"]["Message"]
+                "ServiceMessage": ce.response["Error"]["Message"]
             })
 
     def get_user_attempts_for_game(self, game_date: date, username: str, game_id: str) -> list[GameTurn]:
@@ -81,10 +81,10 @@ class DynamoProvider:
                 ))
             return game_turns
         except ClientError as ce:
-            logging.error(ce)
+            logging.error(ce.response)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
                 "Message": f"Failed to get user attempts for game with game id {game_id}",
-                "ServiceMessage": ce["Error"]["Message"]
+                "ServiceMessage": ce.response["Error"]["Message"]
             })
 
     def get_game_for_date(self, game_date: date) -> GameWord | None:
@@ -119,10 +119,10 @@ class DynamoProvider:
             logging.info(f"Game found is: {word_game}")
             return word_game
         except ClientError as ce:
-            logging.error(ce)
+            logging.error(ce.response)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
                 "Message": f"Failed to get game on date {game_date.isoformat()}",
-                "ServiceMessage": ce["Error"]["Message"]
+                "ServiceMessage": ce.response["Error"]["Message"]
             })
 
     def get_user_game_turns(self, username: str, timestamp: datetime = 0) -> dict:
@@ -162,10 +162,10 @@ class DynamoProvider:
                 "Count": attempts["Count"]
             }
         except ClientError as ce:
-            logging.error(ce)
+            logging.error(ce.response)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
                 "Message": f"Failed to get user game turns.",
-                "ServiceMessage": ce["Error"]["Message"]
+                "ServiceMessage": ce.response["Error"]["Message"]
             })
 
     def save_user_attempt(self, game_attempt: GameTurn):
@@ -175,10 +175,10 @@ class DynamoProvider:
                 Item=game_attempt.to_dynamo_json()
             )
         except ClientError as ce:
-            logging.error(ce)
+            logging.error(ce.response)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
                 "Message": f"Failed to save user game attempt with the word {game_attempt.word}",
-                "ServiceMessage": ce["Error"]["Message"]
+                "ServiceMessage": ce.response["Error"]["Message"]
             })
 
     def save_word_game(self, word_game: GameWord):
@@ -191,6 +191,6 @@ class DynamoProvider:
             logging.error(ce)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={
                 "Message": f"Failed to save game word on date {word_game.game_date.isoformat()}",
-                "ServiceMessage": ce["Error"]["Message"]
+                "ServiceMessage": ce.response["Error"]["Message"]
             })
 

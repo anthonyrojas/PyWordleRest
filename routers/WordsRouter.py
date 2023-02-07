@@ -75,12 +75,19 @@ async def check_word_attempt(req: Request, game_word_attempt: GameWordAttempt):
         win=False,
         game_id=game_word.game_id
     )
-    game_attempt_count = dynamo_provider.get_user_attempt_count_for_game(
+    game_attempts = dynamo_provider.get_user_attempts_for_game(
         game_date,
         username,
         game_word.game_id
     )
-    if game_attempt_count >= 5:
+    # check if user has already won
+    for game_attempt in game_attempts:
+        if game_attempt.win is True:
+            # do not save word attempt
+            raise HTTPException(400, {
+                "Message": f"You already won the game for date {game_date}"
+            })
+    if len(game_attempts) > 5:
         raise HTTPException(400, {
             "Message": "You cannot have more than 6 attempts per game!"
         })
