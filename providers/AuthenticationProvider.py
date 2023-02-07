@@ -83,7 +83,7 @@ class AuthenticationProvider:
             logging.error(ce.response)
             error_message = ce.response['Error']['Message']
             raise HTTPException(status_code=400, detail={
-                "Message": f"Failed to sign in user {login.username}. Auth service responded with: {error_message}"
+                "Message": f"Failed to sign in user {login.username}. {error_message}"
             })
 
     def refresh_token(self, refresh_request: RefreshRequestModel):
