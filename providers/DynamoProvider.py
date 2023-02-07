@@ -72,12 +72,12 @@ class DynamoProvider:
             game_turns = []
             for item in items:
                 game_turns.append(GameTurn(
-                    username=item["username"],
-                    game_date=date.fromisoformat(item["game_date"]),
-                    game_timestamp=datetime.fromtimestamp(item["game_timestamp"]),
-                    word=item["word"],
-                    win=item["win"],
-                    game_id=item["game_id"]
+                    username=self.deserializer.deserialize(item["username"]),
+                    game_date=date.fromisoformat(self.deserializer.deserialize(item["game_date"])),
+                    game_timestamp=datetime.fromtimestamp(int(self.deserializer.deserialize(item["game_timestamp"]))),
+                    word=self.deserializer.deserialize(item["word"]),
+                    win=self.deserializer.deserialize(item["win"]),
+                    game_id=self.deserializer.deserialize(item["game_id"])
                 ))
             return game_turns
         except ClientError as ce:
