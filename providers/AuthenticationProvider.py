@@ -109,9 +109,10 @@ class AuthenticationProvider:
                 AccessToken=token
             )
             username = cognito_user_info["Username"]
-            user_attributes = {}
+            user_attributes = dict()
             for user_attribute in cognito_user_info["UserAttributes"]:
-                user_attributes[user_attribute["Name"]] = user_attribute["Value"]
+                parsed_attribute = self.__parse_user_attribute(user_attribute)
+                user_attributes.update(parsed_attribute)
             return {
                 "Username": username,
                 "UserAttributes": user_attributes
@@ -123,6 +124,18 @@ class AuthenticationProvider:
                 "Message": f"Failed to get user info. Auth service responded with: {error_message}"
             })
 
+
+    def __parse_user_attribute(self, user_attribute: dict[str, str]) -> dict:
+        if user_attribute["Name"].lower() == "sub":
+            return {"ID": user_attribute["Value"]}
+        elif user_attribute["Name"].lower() == "given_name":
+            return {"FirstName": user_attribute["Value"]}
+        elif user_attribute["Name"].lower() == "family_name":
+            return {"LastName": user_attribute["Value"]}
+        elif user_attribute["Name"].lower() == "email":
+            return {"Email": user_attribute["Value"]}
+        else:
+            return {user_attribute["Name"]: user_attribute["Value"]}
 
 
 

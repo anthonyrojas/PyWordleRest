@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.11
 
 RUN mkdir /usr/src/pywordle
 WORKDIR /usr/src/pywordle
