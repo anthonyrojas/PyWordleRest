@@ -22,10 +22,11 @@ app.add_middleware(
 
 @app.middleware("http")
 async def http_middleware(req: Request, call_next):
-    project_env = os.getenv("PROJECT_ENV")
     cognito_client = client(
         "cognito-idp",
-        region_name="us-west-1"
+        region_name="us-west-1",
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
     )
     if os.getenv("PROJECT_ENV") == "development":
         dynamo_client = client(
@@ -39,7 +40,9 @@ async def http_middleware(req: Request, call_next):
     else:
         dynamo_client = client(
             "dynamodb",
-            region_name="us-west-1"
+            region_name="us-west-1",
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
         )
         req.state.dynamo_provider: DynamoProvider = DynamoProvider(dynamo_client)
     words_api_key = os.getenv("WORDS_API_KEY")
